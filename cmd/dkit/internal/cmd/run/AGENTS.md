@@ -5,13 +5,27 @@ Execute shell commands with AI-optimized output and persistent logging. Supports
 
 ## Command Signature
 ```bash
-dkit run $ARGS
+dkit run [flags] $ARGS
 ```
+
+## Flags
+- `-w, --workspace`: Execute command in project root directory (auto-detected via git)
+- `--ignore-local-bin`: Skip adding `<project-root>/bin` to PATH
 
 ## Core Behavior
 
+### Project Root Detection
+- Automatically detects project root directory using git repository detection
+- Used when `-w/--workspace` flag is specified or when determining `bin` directory location
+
 ### Execution
 - **Input**: Accepts arbitrary shell command arguments (`$ARGS`)
+- **Working Directory**: 
+  - Default: Current directory
+  - With `-w/--workspace`: Project root directory (detected via git)
+- **PATH Management**:
+  - Default: Prepends `<project-root>/bin` to PATH if it exists
+  - With `--ignore-local-bin`: Uses system PATH without modification
 - **Execution**: Runs the command through a shell interpreter
 - **Process Management**: Creates a watchable process that can be monitored
 

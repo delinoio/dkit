@@ -6,6 +6,12 @@
 ## Architecture
 This is the main CLI entry point. All subcommands are organized under `cmd/delikit/internal/cmd/`.
 
+## Project Root Detection
+`dkit` automatically detects the project root directory using git repository detection (locating the `.git` directory). This is used for:
+- Determining the working directory when `-w/--workspace` flag is used
+- Locating the `bin` directory for PATH management
+- Storing persistent logs and process metadata in `<project-root>/.dkit/`
+
 ## Available Commands
 - `dkit run` - Execute shell commands with AI-optimized output and persistent logging
 - `dkit mcp` - MCP (Model Context Protocol) CLI tool with process management
