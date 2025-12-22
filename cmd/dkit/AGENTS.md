@@ -6,6 +6,9 @@
 ## Architecture
 This is the main CLI entry point. All subcommands are organized under `cmd/dkit/internal/cmd/`.
 
+## Logging
+`dkit` uses Go's standard `log/slog` package for structured logging. All logging throughout the codebase must use `slog` instead of `fmt.Print*` or `log.Print*` functions.
+
 ## Project Root Detection
 `dkit` automatically detects the project root directory using git repository detection (locating the `.git` directory). This is used for:
 - Determining the working directory when `-w/--workspace` flag is used
