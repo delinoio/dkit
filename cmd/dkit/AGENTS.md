@@ -15,6 +15,7 @@ This is the main CLI entry point. All subcommands are organized under `cmd/delik
 ## Available Commands
 - `dkit run` - Execute shell commands with AI-optimized output and persistent logging
 - `dkit mcp` - MCP (Model Context Protocol) CLI tool with process management
+- `dkit git` - Git utilities and custom merge drivers
 
 See respective `AGENTS.md` files in each command directory for detailed specifications.
 

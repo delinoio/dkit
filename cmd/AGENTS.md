@@ -14,3 +14,9 @@
 - Easy to add new subcommands
 - Modular architecture for command organization
 - Consistent patterns across all commands
+
+### Git Integration
+- Custom merge drivers must be automatic and require zero manual intervention
+- Git utilities should handle all common package manager lockfiles
+- Always regenerate lockfiles using the appropriate package manager
+- Prefer "checkout theirs + regenerate" strategy over manual conflict resolution
