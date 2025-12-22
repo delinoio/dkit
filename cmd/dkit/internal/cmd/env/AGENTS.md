@@ -451,12 +451,3 @@ dkit env list .env --format yaml > config.yaml
 - **Format agnostic**: Easy conversion between formats
 - **Shell compatible**: Output can be sourced directly
 
-## Future Enhancements
-- `dkit env diff` - Show differences between env files
-- `dkit env encrypt/decrypt` - Encrypt sensitive values
-- `dkit env template` - Generate .env from template
-- `dkit env sync` - Sync with external secret managers (AWS Secrets, Vault)
-- `dkit env check-unused` - Find unused variables in codebase
-- `--interactive` mode for guided configuration
-- Support for `.env.vault` encrypted format
-- Git integration for environment versioning

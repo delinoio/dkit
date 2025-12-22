@@ -553,15 +553,3 @@ dkit lockfile why react packages/app2/package-lock.json
 - **Safe**: Don't modify files without explicit --fix flag
 - **Git-aware**: Easy integration with version control
 
-## Future Enhancements
-- `dkit lockfile visualize` - Interactive dependency graph visualization
-- `dkit lockfile audit` - Security audit integration
-- `dkit lockfile compress` - Optimize lockfile size
-- `dkit lockfile migrate` - Convert between package managers
-- `dkit lockfile blame` - Show which commit introduced a dependency
-- `dkit lockfile cost` - Calculate bundle size impact
-- `--watch` mode for continuous monitoring
-- Integration with package vulnerability databases
-- Support for custom package registries
-- Lockfile merge conflict resolution
-- Machine learning for suggesting updates

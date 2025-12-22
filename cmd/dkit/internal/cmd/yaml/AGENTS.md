@@ -287,12 +287,3 @@ diff <(dkit yaml normalize old.yaml) <(dkit yaml normalize new.yaml)
 - Validate anchor names for malicious patterns
 - Sanitize error messages to avoid information disclosure
 
-## Future Enhancements
-- `--indent N` to specify indentation level
-- `--preserve-comments` to keep YAML comments
-- `--json` output normalized YAML as JSON
-- `--validate-only` to check syntax without normalization
-- `--max-depth N` to limit merge recursion depth
-- `--flow-style` for compact flow-style output
-- Custom tag handler plugins
-- Schema-aware normalization with type coercion

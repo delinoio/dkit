@@ -411,12 +411,3 @@ docker-compose up
 - **Pipe-friendly**: JSON output for scripting
 - **Fast**: Efficient port detection algorithms
 
-## Future Enhancements
-- `dkit port suggest` - Suggest available port near requested one
-- `dkit port reserve <port>` - Reserve port to prevent conflicts
-- `dkit port proxy <from> <to>` - Quick port forwarding
-- `--wait` flag to wait for port to become available
-- Integration with `dkit run` to auto-kill conflicting ports
-- Port usage history and analytics
-- Detect common server types (nginx, node, postgres, etc.)
-- `--interactive` mode for multi-port management

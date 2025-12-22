@@ -162,10 +162,3 @@ find . -name "*.jsonc" | xargs -I {} dkit jsonc compile {} > /dev/null
 - **Silent success**: Only output converted JSON, no progress messages
 - **Verbose errors**: Clear error messages to stderr
 
-## Future Enhancements
-- `--pretty` flag for indented JSON output
-- `--indent N` to specify indentation level
-- `--validate-only` to check syntax without conversion
-- Support for YAML-style comments (`#`) as optional feature
-- `--preserve-order` to maintain object key order
-- JSON Schema validation integration
