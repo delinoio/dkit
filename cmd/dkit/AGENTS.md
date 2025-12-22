@@ -21,6 +21,7 @@ This is the main CLI entry point. All subcommands are organized under `cmd/dkit/
 - `dkit git` - Git utilities and custom merge drivers
 - `dkit jsonc` - Convert JSONC/JSON5 to standard JSON (pipe-friendly)
 - `dkit yaml` - Normalize YAML by resolving anchors, aliases, and merge keys (pipe-friendly)
+- `dkit env` - Manage environment variables across .env files (parse, merge, validate, convert)
 
 See respective `AGENTS.md` files in each command directory for detailed specifications.
 
