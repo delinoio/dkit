@@ -1,3 +1,3 @@
-# delikit
+# dkit
 
 DevTools by Delino.
