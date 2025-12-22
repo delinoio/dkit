@@ -1,10 +1,10 @@
-# dkit - Delikit CLI Tool
+# dkit - Delino CLI Tool
 
 ## Binary Name
 `dkit`
 
 ## Architecture
-This is the main CLI entry point. All subcommands are organized under `cmd/delikit/internal/cmd/`.
+This is the main CLI entry point. All subcommands are organized under `cmd/dkit/internal/cmd/`.
 
 ## Project Root Detection
 `dkit` automatically detects the project root directory using git repository detection (locating the `.git` directory). This is used for:
