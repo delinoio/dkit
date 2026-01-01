@@ -12,17 +12,17 @@ import (
 
 // Process metadata structure (from run/AGENTS.md)
 type ProcessMetadata struct {
-	ID         string    `json:"id"`
-	PID        int       `json:"pid"`
-	Command    string    `json:"command"`
-	Args       []string  `json:"args"`
-	CWD        string    `json:"cwd"`
-	StartedAt  time.Time `json:"started_at"`
+	ID         string     `json:"id"`
+	PID        int        `json:"pid"`
+	Command    string     `json:"command"`
+	Args       []string   `json:"args"`
+	CWD        string     `json:"cwd"`
+	StartedAt  time.Time  `json:"started_at"`
 	EndedAt    *time.Time `json:"ended_at,omitempty"`
-	Status     string    `json:"status"` // running, completed, failed
-	ExitCode   *int      `json:"exit_code,omitempty"`
-	StdoutPath string    `json:"stdout_path"`
-	StderrPath string    `json:"stderr_path"`
+	Status     string     `json:"status"` // running, completed, failed
+	ExitCode   *int       `json:"exit_code,omitempty"`
+	StdoutPath string     `json:"stdout_path"`
+	StderrPath string     `json:"stderr_path"`
 }
 
 // ProcessIndex represents the process registry
@@ -237,4 +237,3 @@ func deleteProcessData(processID string) error {
 
 	return nil
 }
-

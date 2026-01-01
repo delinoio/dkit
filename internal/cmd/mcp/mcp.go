@@ -55,9 +55,9 @@ type serverCapabilities struct {
 }
 
 type initializeResult struct {
-	ProtocolVersion string              `json:"protocolVersion"`
-	Capabilities    serverCapabilities  `json:"capabilities"`
-	ServerInfo      serverInfo          `json:"serverInfo"`
+	ProtocolVersion string             `json:"protocolVersion"`
+	Capabilities    serverCapabilities `json:"capabilities"`
+	ServerInfo      serverInfo         `json:"serverInfo"`
 }
 
 type tool struct {
@@ -76,7 +76,7 @@ func runMCPServer(cmd *cobra.Command, args []string) error {
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		
+
 		var req jsonRPCRequest
 		if err := json.Unmarshal(line, &req); err != nil {
 			sendError(encoder, nil, -32700, "Parse error", err.Error())
