@@ -62,6 +62,9 @@ Features:
 }
 
 func runCommand(args []string, workspace, ignoreLocalBin bool) error {
+	// Parse environment variables and command
+	envVars, cmdArgs := parseEnvAndArgs(args)
+
 	// Get current working directory
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -112,18 +115,24 @@ func runCommand(args []string, workspace, ignoreLocalBin bool) error {
 
 	// Build command
 	var cmdExec *exec.Cmd
-	if len(args) == 1 {
+	if len(cmdArgs) == 1 {
 		// Single argument - run through shell
-		cmdExec = exec.Command("sh", "-c", args[0])
+		cmdExec = exec.Command("sh", "-c", cmdArgs[0])
 	} else {
 		// Multiple arguments - run directly
-		cmdExec = exec.Command(args[0], args[1:]...)
+		cmdExec = exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	}
 
 	cmdExec.Dir = workDir
 
 	// Setup environment
 	cmdExec.Env = os.Environ()
+
+	// Apply custom environment variables
+	for key, value := range envVars {
+		cmdExec.Env = updateEnv(cmdExec.Env, key, value)
+	}
+
 	if !ignoreLocalBin {
 		binDir := filepath.Join(projectRoot, "bin")
 		if _, err := os.Stat(binDir); err == nil {
@@ -142,9 +151,13 @@ func runCommand(args []string, workspace, ignoreLocalBin bool) error {
 
 	// Create metadata
 	startTime := time.Now()
+
+	// Build full command string with environment variables
+	fullCommand := strings.Join(args, " ")
+
 	meta := utils.ProcessMetadata{
 		ID:         processID,
-		Command:    strings.Join(args, " "),
+		Command:    fullCommand,
 		Args:       args,
 		Cwd:        workDir,
 		StartedAt:  startTime,
@@ -222,6 +235,54 @@ func runCommand(args []string, workspace, ignoreLocalBin bool) error {
 
 	// Return the command error to preserve exit code
 	return cmdErr
+}
+
+// parseEnvAndArgs separates environment variables from command arguments
+// Environment variables must be in KEY=VALUE format and come before the command
+func parseEnvAndArgs(args []string) (map[string]string, []string) {
+	envVars := make(map[string]string)
+	cmdArgs := []string{}
+
+	// Find where environment variables end and command begins
+	foundCommand := false
+	for _, arg := range args {
+		if !foundCommand && strings.Contains(arg, "=") {
+			// Check if this looks like an environment variable (KEY=VALUE)
+			parts := strings.SplitN(arg, "=", 2)
+			if len(parts) == 2 && isValidEnvVarName(parts[0]) {
+				envVars[parts[0]] = parts[1]
+				continue
+			}
+		}
+		// Once we find a non-env-var argument, everything else is command
+		foundCommand = true
+		cmdArgs = append(cmdArgs, arg)
+	}
+
+	return envVars, cmdArgs
+}
+
+// isValidEnvVarName checks if a string is a valid environment variable name
+// Valid names: alphanumeric characters and underscores, cannot start with a digit
+func isValidEnvVarName(name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+
+	// First character must be letter or underscore
+	first := rune(name[0])
+	if !((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z') || first == '_') {
+		return false
+	}
+
+	// Rest can be alphanumeric or underscore
+	for _, ch := range name[1:] {
+		if !((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_') {
+			return false
+		}
+	}
+
+	return true
 }
 
 // updateEnv updates or adds an environment variable in the env slice

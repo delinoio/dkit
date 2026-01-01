@@ -5,12 +5,27 @@ Execute shell commands in the foreground with real-time output streaming, AI-opt
 
 ## Command Signature
 ```bash
-dkit run [flags] $ARGS
+dkit run [flags] -- [ENV=VALUE...] <command>
 ```
 
 ## Flags
 - `-w, --workspace`: Execute command in project root directory (auto-detected via git)
 - `--ignore-local-bin`: Skip adding `<project-root>/bin` to PATH
+
+## Environment Variables
+Commands can be run with custom environment variables by prefixing them in `KEY=VALUE` format:
+
+```bash
+dkit run -- COLOR=1 pnpm dev
+dkit run -- DEBUG=true NODE_ENV=production npm start
+dkit run -w -- PORT=3000 API_URL=https://api.example.com yarn dev
+```
+
+- Environment variables must be in `KEY=VALUE` format
+- Multiple environment variables can be specified
+- Variables must come before the actual command
+- Valid variable names: alphanumeric and underscores, cannot start with digit
+- Variables are merged with existing environment (override if duplicate)
 
 ## Core Behavior
 
