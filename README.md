@@ -25,7 +25,7 @@ dkit [command] [subcommand] [flags]
 - **env** - Manage environment variables across multiple .env files
 - **git** - Git utilities and custom merge drivers
 - **jsonc** - Convert JSONC/JSON5 to JSON
-- **mcp** - MCP (Model Context Protocol) CLI tool
+- **mcp** - MCP (Model Context Protocol) server for AI coding agents
 - **port** - Manage network ports during development
 - **retry** - Execute commands with automatic retry logic
 - **run** - Execute commands with AI-optimized output and persistent logging
@@ -82,11 +82,29 @@ dkit retry --delay 1s --max-delay 30s -- curl https://api.example.com
 ```bash
 # Run command with persistent logging
 dkit run -- npm test
-
-# View process logs
-dkit mcp process list
-dkit mcp process logs <process-id>
 ```
+
+### MCP Server for AI Agents
+```bash
+# Start MCP server (used by AI coding agents)
+dkit mcp
+
+# Configure with Claude Desktop (add to claude_desktop_config.json):
+{
+  "mcpServers": {
+    "dkit": {
+      "command": "dkit",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+The MCP server provides tools for AI agents to:
+- List and monitor processes started by `dkit run`
+- View process logs and status
+- Kill running processes
+- Clean up old process logs
 
 ### YAML Normalization
 ```bash
