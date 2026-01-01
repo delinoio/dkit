@@ -1,7 +1,7 @@
 # run Command
 
 ## Purpose
-Execute shell commands with AI-optimized output and persistent logging. Supports watching/monitoring processes through the MCP interface.
+Execute shell commands in the foreground with real-time output streaming, AI-optimized logging, and persistent process monitoring through the MCP interface.
 
 ## Command Signature
 ```bash
@@ -26,11 +26,19 @@ dkit run [flags] $ARGS
 - **PATH Management**:
   - Default: Prepends `<project-root>/bin` to PATH if it exists
   - With `--ignore-local-bin`: Uses system PATH without modification
-- **Execution**: Runs the command through a shell interpreter
-- **Process Management**: Creates a watchable process that can be monitored
+- **Execution Mode**: 
+  - Runs the command in **FOREGROUND** (NOT as a daemon)
+  - Blocks until the command completes
+  - Real-time output streamed to terminal
+  - Returns the command's exit code
+- **Process Management**: Creates a watchable process that can be monitored via MCP
 
 ### Output Processing
-- **AI Optimization**: 
+- **Real-time Streaming**:
+  - Command output streams directly to terminal in real-time
+  - User sees output exactly as if running command directly
+  - Ctrl+C interrupts the foreground process
+- **AI Optimization** (for logs only):
   - Removes ANSI color codes and escape sequences
   - Strips progress bars and spinner animations
   - Removes redundant whitespace and empty lines
@@ -88,11 +96,16 @@ dkit run [flags] $ARGS
 ## Use Cases
 - Running build commands with persistent logs
 - Executing long-running tests with monitoring capability
-- Background processes with AI-accessible logs
+- Foreground processes with AI-accessible logs and MCP monitoring
 - Debugging failed commands through log history
 - Automating CI/CD with traceable execution logs
 
 ## Implementation Requirements
+- **Must run command in FOREGROUND (not as daemon)**
+  - Command execution blocks until completion
+  - Real-time stdout/stderr streaming to terminal
+  - User can interrupt with Ctrl+C
+  - Exit code passed through unchanged
 - Must create `.dkit` directory if not exists
 - Should write logs in real-time (buffered for performance)
 - Must handle piped input/output correctly
