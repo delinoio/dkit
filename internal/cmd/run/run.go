@@ -23,7 +23,7 @@ func NewCommand() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "run [flags] -- <command>",
+		Use:   "run [flags] <command>",
 		Short: "Execute commands with logging",
 		Long: `Execute shell commands in the FOREGROUND with real-time output streaming.
 
@@ -33,7 +33,8 @@ Features:
 - Persistent logging to .dkit/processes/
 - AI-optimized log processing
 - Process monitoring through MCP interface
-- Respects original exit codes`,
+- Respects original exit codes
+- Supports environment variables and shell syntax`,
 		DisableFlagParsing: false,
 		SilenceUsage:       true, // Don't show usage on command errors
 		SilenceErrors:      true, // We'll handle errors ourselves
@@ -111,15 +112,9 @@ func runCommand(args []string, workspace, ignoreLocalBin bool) error {
 	defer stderrFile.Close()
 
 	// Build command
-	var cmdExec *exec.Cmd
-	if len(args) == 1 {
-		// Single argument - run through shell
-		cmdExec = exec.Command("sh", "-c", args[0])
-	} else {
-		// Multiple arguments - run directly
-		cmdExec = exec.Command(args[0], args[1:]...)
-	}
-
+	// Always run through shell to support environment variables and shell syntax
+	commandStr := strings.Join(args, " ")
+	cmdExec := exec.Command("sh", "-c", commandStr)
 	cmdExec.Dir = workDir
 
 	// Setup environment
@@ -144,7 +139,7 @@ func runCommand(args []string, workspace, ignoreLocalBin bool) error {
 	startTime := time.Now()
 	meta := utils.ProcessMetadata{
 		ID:         processID,
-		Command:    strings.Join(args, " "),
+		Command:    commandStr,
 		Args:       args,
 		Cwd:        workDir,
 		StartedAt:  startTime,

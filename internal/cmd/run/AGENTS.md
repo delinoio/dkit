@@ -20,6 +20,13 @@ dkit run [flags] $ARGS
 
 ### Execution
 - **Input**: Accepts arbitrary shell command arguments (`$ARGS`)
+  - No need for `--` separator between flags and command
+  - Examples: `dkit run pnpm dev`, `dkit run echo hello world`
+- **Shell Processing**:
+  - All commands are executed through `sh -c` for full shell support
+  - Supports environment variables: `dkit run 'TEST_VAR=hello && echo $TEST_VAR'`
+  - Supports pipes: `dkit run 'echo "test" | wc -l'`
+  - Supports redirections and all shell syntax
 - **Working Directory**: 
   - Default: Current directory
   - With `-w/--workspace`: Project root directory (detected via git)
@@ -95,10 +102,18 @@ dkit run [flags] $ARGS
 
 ## Use Cases
 - Running build commands with persistent logs
+  - `dkit run pnpm build`
+  - `dkit run npm run test`
 - Executing long-running tests with monitoring capability
+  - `dkit run -w pytest tests/`
 - Foreground processes with AI-accessible logs and MCP monitoring
+  - `dkit run pnpm dev`
+  - `dkit run 'PORT=3000 npm start'`
 - Debugging failed commands through log history
 - Automating CI/CD with traceable execution logs
+- Complex shell operations with environment variables
+  - `dkit run 'NODE_ENV=production npm run build'`
+  - `dkit run 'echo "Building..." && make build | tee build.log'`
 
 ## Implementation Requirements
 - **Must run command in FOREGROUND (not as daemon)**
