@@ -26,8 +26,8 @@ port-blocking processes with safety features.`,
 
 func newCheckCommand() *cobra.Command {
 	var (
-		json  bool
-		quiet bool
+		jsonOutput bool
+		quiet      bool
 	)
 
 	cmd := &cobra.Command{
@@ -36,12 +36,11 @@ func newCheckCommand() *cobra.Command {
 		Long:  `Determine if a port is available or in use, with details about the process using it.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: Implement port check
-			return nil
+			return runCheckCommand(args[0], jsonOutput, quiet)
 		},
 	}
 
-	cmd.Flags().BoolVar(&json, "json", false, "Output result in JSON format")
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "Output result in JSON format")
 	cmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "Exit code only")
 
 	return cmd
@@ -55,7 +54,7 @@ func newListCommand() *cobra.Command {
 		tcp       bool
 		udp       bool
 		format    string
-		sort      string
+		sortBy    string
 	)
 
 	cmd := &cobra.Command{
@@ -63,8 +62,7 @@ func newListCommand() *cobra.Command {
 		Short: "List used ports",
 		Long:  `Display all currently used ports with process information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: Implement port list
-			return nil
+			return runListCommand(portRange, listening, all, tcp, udp, format, sortBy)
 		},
 	}
 
@@ -74,7 +72,7 @@ func newListCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&tcp, "tcp", false, "TCP ports only")
 	cmd.Flags().BoolVar(&udp, "udp", false, "UDP ports only")
 	cmd.Flags().StringVar(&format, "format", "table", "Output format (table|json|csv)")
-	cmd.Flags().StringVar(&sort, "sort", "port", "Sort by column (port|pid|process)")
+	cmd.Flags().StringVar(&sortBy, "sort", "port", "Sort by column (port|pid|process)")
 
 	return cmd
 }
@@ -92,8 +90,7 @@ func newKillCommand() *cobra.Command {
 		Long:  `Terminate the process using a specific port. Includes safety confirmations for system processes.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: Implement port kill
-			return nil
+			return runKillCommand(args[0], force, signal, timeout)
 		},
 	}
 
@@ -113,8 +110,7 @@ func newFindCommand() *cobra.Command {
 		Long:  `Search for processes using ports matching a pattern or range.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: Implement port find
-			return nil
+			return runFindCommand(args[0], format)
 		},
 	}
 
@@ -134,8 +130,7 @@ func newWatchCommand() *cobra.Command {
 		Short: "Monitor port activity",
 		Long:  `Watch for processes binding to or releasing ports in real-time.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: Implement port watch
-			return nil
+			return runWatchCommand(portRange, interval)
 		},
 	}
 
