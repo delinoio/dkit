@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -320,30 +322,262 @@ func handleToolsCall(req *jsonRPCRequest) *jsonRPCResponse {
 	}
 }
 
-// Tool handlers (to be implemented)
+// Tool handlers
 func handleProcessList(args map[string]interface{}) (interface{}, error) {
-	// TODO: Implement process list
-	return "Process list - TODO", nil
+	index, err := loadProcessIndex()
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract filter parameters
+	status := ""
+	if s, ok := args["status"].(string); ok {
+		status = s
+	}
+
+	limit := 0
+	if l, ok := args["limit"].(float64); ok {
+		limit = int(l)
+	}
+
+	// Filter processes
+	filtered := filterProcesses(index.Processes, status, limit)
+
+	return map[string]interface{}{
+		"processes": filtered,
+		"total":     len(index.Processes),
+		"filtered":  len(filtered),
+	}, nil
 }
 
 func handleProcessShow(args map[string]interface{}) (interface{}, error) {
-	// TODO: Implement process show
-	return "Process show - TODO", nil
+	processID, ok := args["process_id"].(string)
+	if !ok || processID == "" {
+		return nil, fmt.Errorf("process_id is required")
+	}
+
+	meta, err := loadProcessMetadata(processID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update status if process is marked as running but actually terminated
+	if meta.Status == "running" && !isProcessRunning(meta.PID) {
+		meta.Status = "failed"
+		if meta.ExitCode == nil {
+			code := -1
+			meta.ExitCode = &code
+		}
+	}
+
+	// Get log file sizes
+	dkitDir, _ := getDkitDir()
+	stdoutPath := filepath.Join(dkitDir, "processes", processID, "stdout.log")
+	stderrPath := filepath.Join(dkitDir, "processes", processID, "stderr.log")
+
+	stdoutSize := int64(0)
+	stderrSize := int64(0)
+
+	if info, err := os.Stat(stdoutPath); err == nil {
+		stdoutSize = info.Size()
+	}
+	if info, err := os.Stat(stderrPath); err == nil {
+		stderrSize = info.Size()
+	}
+
+	return map[string]interface{}{
+		"id":          meta.ID,
+		"pid":         meta.PID,
+		"command":     meta.Command,
+		"args":        meta.Args,
+		"cwd":         meta.CWD,
+		"started_at":  meta.StartedAt,
+		"ended_at":    meta.EndedAt,
+		"status":      meta.Status,
+		"exit_code":   meta.ExitCode,
+		"stdout_path": meta.StdoutPath,
+		"stderr_path": meta.StderrPath,
+		"log_size": map[string]int64{
+			"stdout": stdoutSize,
+			"stderr": stderrSize,
+		},
+	}, nil
 }
 
 func handleProcessLogs(args map[string]interface{}) (interface{}, error) {
-	// TODO: Implement process logs
-	return "Process logs - TODO", nil
+	processID, ok := args["process_id"].(string)
+	if !ok || processID == "" {
+		return nil, fmt.Errorf("process_id is required")
+	}
+
+	stream := "both"
+	if s, ok := args["stream"].(string); ok {
+		stream = s
+	}
+
+	lines := 100
+	if l, ok := args["lines"].(float64); ok {
+		lines = int(l)
+	}
+
+	dkitDir, err := getDkitDir()
+	if err != nil {
+		return nil, err
+	}
+
+	stdoutPath := filepath.Join(dkitDir, "processes", processID, "stdout.log")
+	stderrPath := filepath.Join(dkitDir, "processes", processID, "stderr.log")
+
+	result := map[string]interface{}{
+		"process_id": processID,
+	}
+
+	if stream == "stdout" || stream == "both" {
+		stdoutLines, err := readLogFile(stdoutPath, lines)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read stdout: %w", err)
+		}
+		result["stdout"] = stdoutLines
+	}
+
+	if stream == "stderr" || stream == "both" {
+		stderrLines, err := readLogFile(stderrPath, lines)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read stderr: %w", err)
+		}
+		result["stderr"] = stderrLines
+	}
+
+	return result, nil
 }
 
 func handleProcessKill(args map[string]interface{}) (interface{}, error) {
-	// TODO: Implement process kill
-	return "Process kill - TODO", nil
+	processID, ok := args["process_id"].(string)
+	if !ok || processID == "" {
+		return nil, fmt.Errorf("process_id is required")
+	}
+
+	signal := "SIGTERM"
+	if s, ok := args["signal"].(string); ok {
+		signal = s
+	}
+
+	meta, err := loadProcessMetadata(processID)
+	if err != nil {
+		return nil, err
+	}
+
+	if meta.Status != "running" {
+		return nil, fmt.Errorf("process is not running (status: %s)", meta.Status)
+	}
+
+	if !isProcessRunning(meta.PID) {
+		return nil, fmt.Errorf("process is no longer running")
+	}
+
+	if err := killProcess(meta.PID, signal); err != nil {
+		return nil, err
+	}
+
+	// Update process status
+	index, err := loadProcessIndex()
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range index.Processes {
+		if index.Processes[i].ID == processID {
+			index.Processes[i].Status = "failed"
+			now := time.Now()
+			index.Processes[i].EndedAt = &now
+			code := -1
+			index.Processes[i].ExitCode = &code
+			break
+		}
+	}
+
+	if err := saveProcessIndex(index); err != nil {
+		return nil, fmt.Errorf("failed to update process status: %w", err)
+	}
+
+	return map[string]interface{}{
+		"process_id": processID,
+		"signal":     signal,
+		"killed_at":  time.Now(),
+	}, nil
 }
 
 func handleProcessClean(args map[string]interface{}) (interface{}, error) {
-	// TODO: Implement process clean
-	return "Process clean - TODO", nil
+	all := false
+	if a, ok := args["all"].(bool); ok {
+		all = a
+	}
+
+	completed := false
+	if c, ok := args["completed"].(bool); ok {
+		completed = c
+	}
+
+	failed := false
+	if f, ok := args["failed"].(bool); ok {
+		failed = f
+	}
+
+	var beforeDate *time.Time
+	if b, ok := args["before"].(string); ok {
+		t, err := time.Parse(time.RFC3339, b)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date format (use ISO 8601): %w", err)
+		}
+		beforeDate = &t
+	}
+
+	index, err := loadProcessIndex()
+	if err != nil {
+		return nil, err
+	}
+
+	toDelete := []string{}
+	remaining := []ProcessMetadata{}
+
+	for _, p := range index.Processes {
+		shouldDelete := false
+
+		if all {
+			shouldDelete = true
+		} else if completed && p.Status == "completed" {
+			shouldDelete = true
+		} else if failed && p.Status == "failed" {
+			shouldDelete = true
+		} else if beforeDate != nil && p.StartedAt.Before(*beforeDate) {
+			shouldDelete = true
+		}
+
+		if shouldDelete {
+			toDelete = append(toDelete, p.ID)
+		} else {
+			remaining = append(remaining, p)
+		}
+	}
+
+	// Delete process data
+	errors := []string{}
+	for _, id := range toDelete {
+		if err := deleteProcessData(id); err != nil {
+			errors = append(errors, fmt.Sprintf("%s: %v", id, err))
+		}
+	}
+
+	// Update index
+	index.Processes = remaining
+	if err := saveProcessIndex(index); err != nil {
+		return nil, fmt.Errorf("failed to update index: %w", err)
+	}
+
+	return map[string]interface{}{
+		"cleaned": len(toDelete),
+		"errors":  errors,
+	}, nil
 }
 
 func formatToolResult(result interface{}) string {
