@@ -1,111 +1,133 @@
 # mcp Command
 
 ## Purpose
-MCP (Model Context Protocol) CLI tool for managing and interacting with MCP servers and clients.
+MCP (Model Context Protocol) server that provides tools for AI coding agents like Claude Code, Cursor, etc.
 
 ## Command Signature
 ```bash
-dkit mcp [subcommand] [options]
+dkit mcp
 ```
 
-## Subcommands Overview
-This is the main MCP tool with many subcommands to be added.
-
-### Process Management (dkit run integration)
-- `dkit mcp process list` - List all processes started by `dkit run`
-- `dkit mcp process show <id>` - Show process details and metadata
-- `dkit mcp process logs <id>` - View process logs (stdout and stderr)
-- `dkit mcp process tail <id> [--follow]` - Tail process logs in real-time
-- `dkit mcp process kill <id>` - Kill a running process
-- `dkit mcp process clean [--all|--completed]` - Clean up old process logs
+## Overview
+When `dkit mcp` is executed, it starts an MCP server that communicates via stdio using JSON-RPC 2.0 protocol. AI coding agents can connect to this server and invoke tools for process management.
 
 ## Design Principles
-- **Extensible**: Easy to add new subcommands
-- **Composable**: Commands should work well with pipes and scripts
-- **Self-documenting**: Built-in help for all commands
-- **Safe**: Confirmation for destructive operations
+- **Stdio-based**: Communication via standard input/output using JSON-RPC 2.0
+- **Tool-oriented**: Exposes capabilities as MCP tools
+- **Zero-config**: No setup required, just run and connect
+- **Safe**: Operations require explicit parameters
 
-## Implementation Requirements
-- Must support JSON input/output for automation
-- Must handle connection timeouts gracefully
-- Must validate all configurations before use
+## Protocol
+- **Transport**: stdio (standard input/output)
+- **Format**: JSON-RPC 2.0
+- **Lifecycle**: Server runs until stdin closes or receives shutdown request
 
-## Output Format
-- Default: Human-readable table format
-- `--json`: Machine-readable JSON output
-- `--quiet`: Minimal output (IDs/names only)
-- `--verbose`: Detailed debugging information
-
-## Process Management Details
-
-### Overview
-The MCP tool provides comprehensive process management for all processes started via `dkit run`. This allows AI agents and users to monitor, inspect, and control long-running processes.
+## Available Tools
+All tools exposed to AI agents for managing `dkit run` processes:
 
 ### Data Source
 - All process data stored in `<project-root>/.dkit/`
 - Process registry: `.dkit/index.json`
 - Individual process data: `.dkit/processes/<process-id>/`
 
-### Process List Command
-```bash
-dkit mcp process list [--status running|completed|failed] [--limit N]
-```
-**Output**: Table showing process ID, command, status, start time, exit code
+### 1. process_list
+**Description**: List all processes started by `dkit run`
 
-### Process Show Command
-```bash
-dkit mcp process show <process-id>
+**Input Schema**:
+```json
+{
+  "status": "running|completed|failed",  // optional
+  "limit": 10  // optional
+}
 ```
-**Output**: Full metadata including:
-- Process ID and PID
-- Full command with arguments
-- Working directory
-- Start/end timestamps
-- Current status
-- Exit code (if terminated)
-- Log file paths
 
-### Process Logs Command
-```bash
-dkit mcp process logs <process-id> [--stdout|--stderr|--both] [--lines N]
-```
-**Behavior**:
-- Default: Show last 100 lines from both stdout and stderr
-- `--stdout`: Only standard output
-- `--stderr`: Only standard error
-- `--both`: Interleaved output (default)
-- `--lines N`: Show last N lines
+**Output**: Array of process objects with ID, command, status, start time, exit code
 
-### Process Tail Command
-```bash
-dkit mcp process tail <process-id> [--follow] [--stdout|--stderr]
-```
-**Behavior**:
-- Show real-time output from running or completed processes
-- `--follow` (`-f`): Continue watching for new output
-- Works even if process is not running (shows historical logs)
-- Exit with Ctrl+C
+### 2. process_show
+**Description**: Show detailed information about a specific process
 
-### Process Kill Command
-```bash
-dkit mcp process kill <process-id> [--signal SIGTERM|SIGKILL]
+**Input Schema**:
+```json
+{
+  "process_id": "unique-process-id"
+}
 ```
-**Behavior**:
-- Sends signal to running process
-- Default: SIGTERM (graceful shutdown)
-- Updates process status in registry
-- Error if process already terminated
 
-### Process Clean Command
-```bash
-dkit mcp process clean [--all|--completed|--failed|--before DATE]
+**Output**: Full metadata including PID, command, working directory, timestamps, status, exit code, log paths
+
+### 3. process_logs
+**Description**: View process logs (stdout and stderr)
+
+**Input Schema**:
+```json
+{
+  "process_id": "unique-process-id",
+  "stream": "stdout|stderr|both",  // optional, default: both
+  "lines": 100  // optional, default: 100
+}
 ```
-**Behavior**:
-- Remove process logs and metadata
-- `--all`: Clean all processes (requires confirmation)
-- `--completed`: Only completed processes (exit code 0)
-- `--failed`: Only failed processes (exit code != 0)
-- `--before DATE`: Processes started before specific date
+
+**Output**: Log content as string
+
+### 4. process_tail
+**Description**: Show real-time output from a process
+
+**Input Schema**:
+```json
+{
+  "process_id": "unique-process-id",
+  "follow": true,  // optional, default: false
+  "stream": "stdout|stderr|both"  // optional, default: both
+}
+```
+
+**Output**: Log content stream (for follow mode, this is more complex)
+
+### 5. process_kill
+**Description**: Send signal to terminate a running process
+
+**Input Schema**:
+```json
+{
+  "process_id": "unique-process-id",
+  "signal": "SIGTERM|SIGKILL"  // optional, default: SIGTERM
+}
+```
+
+**Output**: Confirmation with updated process status
+
+### 6. process_clean
+**Description**: Remove process logs and metadata
+
+**Input Schema**:
+```json
+{
+  "all": false,  // optional
+  "completed": false,  // optional
+  "failed": false,  // optional
+  "before": "2025-01-01T00:00:00Z"  // optional, ISO 8601 format
+}
+```
+
+**Output**: List of removed process IDs
+
+## Usage with AI Agents
+
+### Claude Desktop Configuration
+Add to `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "dkit": {
+      "command": "dkit",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Cursor Configuration
+Add to MCP settings to connect the server.
 
 ## Future Expansion
-This command will grow significantly with additional subcommands.
+Additional tools will be added for other dkit capabilities beyond process management.
