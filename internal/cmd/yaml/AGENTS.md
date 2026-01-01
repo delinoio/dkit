@@ -5,39 +5,51 @@ Normalize YAML files by resolving all anchors, aliases, and merge keys to produc
 
 ## Command Signature
 ```bash
+dkit yaml [subcommand] [options]
+```
+
+## Subcommands
+
+### normalize - Normalize YAML Files
+
+#### Purpose
+Normalize YAML files by resolving all anchors, aliases, and merge keys to produce a flat, self-contained YAML output.
+
+#### Command Signature
+```bash
 dkit yaml normalize [file]
 ```
 
-## Input/Output Behavior
+#### Input/Output Behavior
 - **Input Source**:
   - If `file` argument provided: Read from specified file
   - If no argument: Read from stdin (pipe-friendly)
 - **Output**: Normalized YAML written to stdout
 - **Errors**: Written to stderr
 
-## Normalization Process
+#### Normalization Process
 
-### Anchor and Alias Resolution
+**Anchor and Alias Resolution:**
 - **Anchors** (`&anchor`): Expand all anchored values inline
 - **Aliases** (`*alias`): Replace with full referenced content
 - Result: No `&` or `*` references in output
 
-### Merge Key Resolution
+**Merge Key Resolution:**
 - **Merge keys** (`<<:`): Fully expand merged content
 - Resolve nested merges recursively
 - Handle multiple merge keys correctly
 - Maintain proper override semantics (later values override earlier)
 
-### Other Normalizations
+**Other Normalizations:**
 - Resolve all YAML tags to their canonical forms
 - Expand multi-line strings to consistent format
 - Normalize boolean/null representations
 - Preserve numeric types and precision
 - Maintain UTF-8 encoding
 
-## YAML Features Handled
+#### YAML Features Handled
 
-### Anchors and Aliases
+**Anchors and Aliases:**
 ```yaml
 # Input
 base: &base
@@ -59,7 +71,7 @@ prod:
   env: production
 ```
 
-### Multiple Merge Keys
+**Multiple Merge Keys:**
 ```yaml
 # Input
 defaults: &defaults
@@ -90,7 +102,7 @@ config:
   cache: false
 ```
 
-### Nested Anchors
+**Nested Anchors:**
 ```yaml
 # Input
 database: &db
@@ -121,7 +133,7 @@ app:
     pass: secret
 ```
 
-## Output Format
+#### Output Format
 - **Style**: Block style (default YAML formatting)
 - **Indentation**: 2 spaces (configurable in future)
 - **Encoding**: UTF-8
@@ -129,7 +141,7 @@ app:
 - **Trailing Newline**: Single newline for pipe compatibility
 - **Formatting**: Clean, readable YAML without references
 
-## Exit Codes
+#### Exit Codes
 - `0` - Successful normalization
 - `1` - Invalid YAML syntax
 - `2` - File not found (when file argument provided)
@@ -138,56 +150,56 @@ app:
 - `5` - I/O error (read/write failure)
 - `127` - Invalid command usage
 
-## Error Handling
+#### Error Handling
 
-### Syntax Errors
+**Syntax Errors:**
 ```
 [dkit] ERROR: Invalid YAML syntax at line 23, column 5
 [dkit] Unexpected indentation level
 ```
 
-### Unresolvable References
+**Unresolvable References:**
 ```
 [dkit] ERROR: Undefined alias reference: *unknown
 [dkit] Referenced at line 45, column 8
 ```
 
-### Circular References
+**Circular References:**
 ```
 [dkit] ERROR: Circular reference detected
 [dkit] Anchor 'config' references itself directly or indirectly
 ```
 
-### File Not Found
+**File Not Found:**
 ```
 [dkit] ERROR: File not found: config.yaml
 ```
 
-## Usage Examples
+#### Usage Examples
 
-### From File
+**From File:**
 ```bash
 dkit yaml normalize config.yaml > normalized.yaml
 ```
 
-### From Stdin (Pipe)
+**From Stdin (Pipe):**
 ```bash
 cat deployment.yaml | dkit yaml normalize > flat-deployment.yaml
 ```
 
-### In Shell Pipeline
+**In Shell Pipeline:**
 ```bash
 curl https://example.com/config.yaml | dkit yaml normalize | yq '.services'
 ```
 
-### Kubernetes Config Normalization
+**Kubernetes Config Normalization:**
 ```bash
 # Normalize Kubernetes manifests with complex anchors
 dkit yaml normalize k8s-template.yaml > k8s-manifest.yaml
 kubectl apply -f k8s-manifest.yaml
 ```
 
-### CI/CD Integration
+**CI/CD Integration:**
 ```bash
 # Normalize configs before deployment
 find ./configs -name "*.yaml" -exec dkit yaml normalize {} > {}.normalized \;
@@ -223,7 +235,7 @@ find ./configs -name "*.yaml" -exec dkit yaml normalize {} > {}.normalized \;
 
 ## Advanced Features
 
-### Multi-Document Support
+**Multi-Document Support:**
 ```bash
 # Input: Multiple YAML documents separated by ---
 ---
@@ -242,7 +254,7 @@ app:
   value: 1
 ```
 
-### Preserve Comments (Future)
+**Preserve Comments (Future):**
 ```bash
 dkit yaml normalize --preserve-comments config.yaml
 # Future: Keep comments in normalized output
@@ -250,24 +262,24 @@ dkit yaml normalize --preserve-comments config.yaml
 
 ## Integration with Other Tools
 
-### yq Integration
+**yq Integration:**
 ```bash
 dkit yaml normalize config.yaml | yq '.database.host'
 ```
 
-### Helm/Kubernetes
+**Helm/Kubernetes:**
 ```bash
 # Normalize Helm values for inspection
 helm template myapp . | dkit yaml normalize > full-manifest.yaml
 ```
 
-### Configuration Validation
+**Configuration Validation:**
 ```bash
 # Normalize then validate with schema
 dkit yaml normalize config.yaml | check-jsonschema --schemafile schema.json -
 ```
 
-### Git Diff Improvement
+**Git Diff Improvement:**
 ```bash
 # Normalize YAML files before diffing to avoid anchor/alias noise
 diff <(dkit yaml normalize old.yaml) <(dkit yaml normalize new.yaml)
