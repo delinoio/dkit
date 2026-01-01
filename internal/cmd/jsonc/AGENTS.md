@@ -5,25 +5,37 @@ Convert JSONC (JSON with Comments) or JSON5 files to standard JSON format. Desig
 
 ## Command Signature
 ```bash
+dkit jsonc [subcommand] [options]
+```
+
+## Subcommands
+
+### compile - Convert JSONC/JSON5 to JSON
+
+#### Purpose
+Convert JSONC (JSON with Comments) or JSON5 files to standard JSON format.
+
+#### Command Signature
+```bash
 dkit jsonc compile [file]
 ```
 
-## Input/Output Behavior
+#### Input/Output Behavior
 - **Input Source**:
   - If `file` argument provided: Read from specified file
   - If no argument: Read from stdin (pipe-friendly)
 - **Output**: Standard JSON written to stdout
 - **Errors**: Written to stderr
 
-## Supported Input Formats
+#### Supported Input Formats
 
-### JSONC (JSON with Comments)
+**JSONC (JSON with Comments):**
 - Single-line comments: `// comment`
 - Multi-line comments: `/* comment */`
 - Trailing commas allowed
 - Follows Visual Studio Code JSONC specification
 
-### JSON5
+**JSON5:**
 - Comments (single and multi-line)
 - Trailing commas in objects and arrays
 - Unquoted object keys
@@ -34,19 +46,19 @@ dkit jsonc compile [file]
 - Positive infinity, negative infinity, and NaN
 - Explicit plus sign on numbers
 
-## Processing Behavior
+#### Processing Behavior
 
-### Comment Removal
+**Comment Removal:**
 - Strip all single-line comments (`//`)
 - Strip all multi-line comments (`/* */`)
 - Preserve comment-like strings within JSON strings
 
-### Trailing Comma Handling
+**Trailing Comma Handling:**
 - Remove trailing commas from objects
 - Remove trailing commas from arrays
 - Maintain valid JSON syntax
 
-### JSON5-Specific Transformations
+**JSON5-Specific Transformations:**
 - Quote all object keys
 - Convert single quotes to double quotes
 - Expand multi-line strings into single line
@@ -54,55 +66,55 @@ dkit jsonc compile [file]
 - Normalize number formats (`.5` → `0.5`, `5.` → `5.0`)
 - Convert special numeric values to null or error (configurable)
 
-### Output Format
+#### Output Format
 - **Default**: Minified JSON (no whitespace)
 - **Option** (future): `--pretty` flag for indented output
 - **Encoding**: UTF-8
 - **Newline**: Single trailing newline for pipe compatibility
 
-## Exit Codes
+#### Exit Codes
 - `0` - Successful conversion
 - `1` - Invalid input (syntax error in JSONC/JSON5)
 - `2` - File not found (when file argument provided)
 - `3` - I/O error (read/write failure)
 - `127` - Invalid command usage
 
-## Error Handling
+#### Error Handling
 
-### Syntax Errors
+**Syntax Errors:**
 ```
 [dkit] ERROR: Invalid JSONC syntax at line 15, column 8
 [dkit] Expected ',' or '}' after object property
 ```
 
-### File Not Found
+**File Not Found:**
 ```
 [dkit] ERROR: File not found: config.jsonc
 ```
 
-### Invalid UTF-8
+**Invalid UTF-8:**
 ```
 [dkit] ERROR: Input contains invalid UTF-8 sequences
 ```
 
-## Usage Examples
+#### Usage Examples
 
-### From File
+**From File:**
 ```bash
 dkit jsonc compile config.jsonc > config.json
 ```
 
-### From Stdin (Pipe)
+**From Stdin (Pipe):**
 ```bash
 cat config.jsonc | dkit jsonc compile > config.json
 ```
 
-### In Shell Pipeline
+**In Shell Pipeline:**
 ```bash
 curl https://example.com/config.jsonc | dkit jsonc compile | jq '.version'
 ```
 
-### With Error Handling
+**With Error Handling:**
 ```bash
 if dkit jsonc compile config.jsonc > output.json 2>error.log; then
   echo "Conversion successful"
