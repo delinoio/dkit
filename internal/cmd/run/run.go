@@ -1,7 +1,6 @@
 package run
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -135,19 +134,11 @@ func runCommand(args []string, workspace, ignoreLocalBin bool) error {
 		}
 	}
 
-	// Create pipes for stdout/stderr
-	stdoutPipe, err := cmdExec.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("failed to create stdout pipe: %w", err)
-	}
-
-	stderrPipe, err := cmdExec.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("failed to create stderr pipe: %w", err)
-	}
-
-	// Setup stdin passthrough
+	// Setup stdin/stdout/stderr with TTY support
+	// Use MultiWriter to write to both terminal and log files
 	cmdExec.Stdin = os.Stdin
+	cmdExec.Stdout = io.MultiWriter(os.Stdout, stdoutFile)
+	cmdExec.Stderr = io.MultiWriter(os.Stderr, stderrFile)
 
 	// Create metadata
 	startTime := time.Now()
@@ -202,28 +193,9 @@ func runCommand(args []string, workspace, ignoreLocalBin bool) error {
 		}
 	}()
 
-	// Stream output to both terminal and log files
-	var stdoutErr, stderrErr error
-	doneChan := make(chan bool, 2)
-
-	// Handle stdout
-	go func() {
-		stdoutErr = streamOutput(stdoutPipe, os.Stdout, stdoutFile)
-		doneChan <- true
-	}()
-
-	// Handle stderr
-	go func() {
-		stderrErr = streamOutput(stderrPipe, os.Stderr, stderrFile)
-		doneChan <- true
-	}()
-
 	// Wait for command to finish
+	// Output is automatically written to both terminal and log files via MultiWriter
 	cmdErr := cmdExec.Wait()
-
-	// Wait for output streaming to complete
-	<-doneChan
-	<-doneChan
 
 	// Update metadata with completion status
 	endTime := time.Now()
@@ -248,34 +220,8 @@ func runCommand(args []string, workspace, ignoreLocalBin bool) error {
 		fmt.Fprintf(os.Stderr, "Warning: failed to save process metadata: %v\n", err)
 	}
 
-	// Check for streaming errors
-	if stdoutErr != nil {
-		fmt.Fprintf(os.Stderr, "Warning: error streaming stdout: %v\n", stdoutErr)
-	}
-	if stderrErr != nil {
-		fmt.Fprintf(os.Stderr, "Warning: error streaming stderr: %v\n", stderrErr)
-	}
-
 	// Return the command error to preserve exit code
 	return cmdErr
-}
-
-// streamOutput reads from src and writes to both dst and logFile
-func streamOutput(src io.Reader, dst io.Writer, logFile *os.File) error {
-	scanner := bufio.NewScanner(src)
-	scanner.Buffer(make([]byte, 64*1024), 1024*1024) // 64KB initial, 1MB max
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		// Write to terminal
-		fmt.Fprintln(dst, line)
-
-		// Write to log file
-		fmt.Fprintln(logFile, line)
-	}
-
-	return scanner.Err()
 }
 
 // updateEnv updates or adds an environment variable in the env slice
